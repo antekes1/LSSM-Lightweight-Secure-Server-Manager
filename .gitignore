@@ -1,0 +1,9 @@
+.env
+venv/
+__pycache__/
+.idea/
+alembic.ini
+alembic/
+react/node_modules/
+logs/
+logs_archive/
