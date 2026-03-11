@@ -1,4 +1,4 @@
-import {React, useState, useEffect} from "react";
+import React from "react";
 import './App.css'
 import {
   BrowserRouter as Router,
@@ -6,19 +6,27 @@ import {
   Route,
 } from "react-router-dom";
 
-function App() {
+import HomePage from "./routes/HomePage";
+import AdminLayout from "./layouts/AdminLayout";
+import AuthPage from "./routes/AuthPage";
+import ServerDetails from "./routes/server/ServerPage";
+import LogsArchive from "./routes/server/ArchivalLogs";
+import AddUser from "./routes/AddUserPage";
 
+function App() {
   return (
-    <div className='min-h-screen flex flex-col dark:bg-gray-800 font-poppins'>
-      <Router>
-      <Navbar/>
+    <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route element={<AdminLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/server/:id" element={<ServerDetails />} />
+          <Route path="/add-user" element={<AddUser />} />
+          <Route path="/logs" element={<LogsArchive />} />
+        </Route>
+        <Route path="/login" element={<AuthPage/>} />
       </Routes>
-      <Footer/>
     </Router>
-    </div>
   )
 }
 
-export default App
+export default App;
