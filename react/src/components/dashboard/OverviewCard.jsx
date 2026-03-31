@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 
 const items = [
-  { label: 'Account', value: '20%', color: 'bg-indigo-500' },
-  { label: 'Services', value: '40%', color: 'bg-fuchsia-500' },
-  { label: 'Restaurant', value: '15%', color: 'bg-violet-600' },
-  { label: 'Others', value: '15%', color: 'bg-slate-300' },
+  { label: "CPU Usage", value: "38%", color: "bg-indigo-500" },
+  { label: "RAM Usage", value: "61%", color: "bg-fuchsia-500" },
+  { label: "Disk Usage", value: "47%", color: "bg-violet-600" },
+  { label: "Security Score", value: "92%", color: "bg-emerald-500" },
 ];
 
 const OverviewCard = () => {
@@ -12,9 +12,9 @@ const OverviewCard = () => {
     <div className="rounded-[28px] bg-white/70 p-6 shadow-lg">
       <div className="grid items-center gap-6 lg:grid-cols-[1fr_220px]">
         <div>
-          <h3 className="text-2xl font-bold text-slate-900">Card&apos;s Overview</h3>
+          <h3 className="text-2xl font-bold text-slate-900">Servers Overview</h3>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Short summary of account categories and service activity.
+            Podsumowanie kluczowych metryk infrastruktury i bezpieczeństwa.
           </p>
 
           <div className="mt-5 space-y-4">
@@ -24,7 +24,7 @@ const OverviewCard = () => {
                   <span className={`h-4 w-4 rounded-full ${item.color}`} />
                   <span className="font-medium text-slate-800">{item.label}</span>
                 </div>
-                <span className="font-semibold text-slate-400">{item.value}</span>
+                <span className="font-semibold text-slate-500">{item.value}</span>
               </div>
             ))}
           </div>
@@ -35,7 +35,7 @@ const OverviewCard = () => {
             className="h-[200px] w-[200px] rounded-full"
             style={{
               background:
-                'conic-gradient(#4f6ecb 0deg 90deg, #65d65b 90deg 180deg, #f5a14e 180deg 270deg, #d9d9d9 270deg 360deg)',
+                "conic-gradient(#6366f1 0deg 110deg, #d946ef 110deg 220deg, #7c3aed 220deg 300deg, #10b981 300deg 360deg)",
             }}
           >
             <div className="flex h-full items-center justify-center">

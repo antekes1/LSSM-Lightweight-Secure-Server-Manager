@@ -12,9 +12,11 @@ import AuthPage from "./routes/AuthPage";
 import ServerDetails from "./routes/server/ServerPage";
 import LogsArchive from "./routes/server/ArchivalLogs";
 import AddUser from "./routes/AddUserPage";
+import { ToastProvider } from "./contexts/ToastContext";
 
 function App() {
   return (
+    <ToastProvider>
     <Router>
       <Routes>
         <Route element={<AdminLayout />}>
@@ -26,6 +28,7 @@ function App() {
         <Route path="/login" element={<AuthPage/>} />
       </Routes>
     </Router>
+    </ToastProvider>
   )
 }
 

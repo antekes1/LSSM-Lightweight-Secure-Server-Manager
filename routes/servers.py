@@ -105,14 +105,39 @@ class message_api():
     async def view_servers(self, request: ViewServers):
         db = self.db_dependency
         user = await self.get_user(token=request.token)
+
         servers = db.query(models.Server).all()
-        return {"msg": "success"}
+
+        # Tworzymy listę słowników z serwerami i usuwamy token
+        servers_list = []
+        for s in servers:
+            server_dict = {column.name: getattr(s, column.name) for column in s.__table__.columns}
+            server_dict.pop("token", None)
+            servers_list.append(server_dict)
+
+        return {
+            "msg": "success",
+            "servers": servers_list
+        }
 
     @router.post("/view_server", status_code=status.HTTP_200_OK)
     async def view_server(self, request: ViewServer):
         db = self.db_dependency
         user = await self.get_user(token=request.token)
-        return {"msg": "success"}
+
+        server = db.query(models.Server).filter(models.Server.id == request.id).first()
+
+        if not server:
+            raise HTTPException(status_code=404, detail="Server not found")
+
+        # Konwersja jednego obiektu na słownik
+        server_dict = {column.name: getattr(server, column.name) for column in server.__table__.columns}
+        server_dict.pop("token", None)
+
+        return {
+            "msg": "success",
+            "server": server_dict
+        }
 
     @router.get("/wake_server/{server_id}", status_code=status.HTTP_200_OK)
     async def wake_server(self, server_id: int, background_tasks: BackgroundTasks):

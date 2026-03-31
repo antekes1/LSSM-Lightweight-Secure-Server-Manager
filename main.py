@@ -52,16 +52,16 @@ db_dependency = Annotated[Session, Depends(get_db)]
 # frontend import
 
 ######
-# app.mount("/assets", StaticFiles(directory="./react/dist/assets"), name="assets")
-# app.mount("/app", StaticFiles(directory="./react/dist"), name="app")
+app.mount("/assets", StaticFiles(directory="./react/dist/assets"), name="assets")
+app.mount("/app", StaticFiles(directory="./react/dist"), name="app")
 
 @app.get("/icon.png", include_in_schema=False)
 async def favicon():
     return FileResponse("./static/icon.png")
 
-# @app.get("/")
-# async def root():
-#     return FileResponse(os.path.join("./react/dist", "index.html"))
+@app.get("/")
+async def root():
+    return FileResponse(os.path.join("./react/dist", "index.html"))
 
 @app.get("/status", status_code=status.HTTP_200_OK)
 async def statuss():
@@ -71,15 +71,15 @@ async def statuss():
 async def version():
     return {"name": "LSSM core", "version": "1.0.0"}
 
-# @app.get("/{full_path:path}")
-# async def serve_react_app(full_path: str, request: Request):
-#     # Check if the path corresponds to an existing static file
-#     static_file_path = os.path.join("dist", full_path)
-#     if os.path.isfile(static_file_path):
-#         return FileResponse(static_file_path)
-#
-#     # Serve index.html for any path that does not correspond to a specific route
-#     return FileResponse(os.path.join("./react/dist", "index.html"))
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str, request: Request):
+    # Check if the path corresponds to an existing static file
+    static_file_path = os.path.join("dist", full_path)
+    if os.path.isfile(static_file_path):
+        return FileResponse(static_file_path)
+
+    # Serve index.html for any path that does not correspond to a specific route
+    return FileResponse(os.path.join("./react/dist", "index.html"))
 
 # @app.get("/removing_expired")
 async def removing_expired():
@@ -94,18 +94,18 @@ async def removing_expired():
 async def startup_event():
     await removing_expired()
 
-@app.get("/", response_class=HTMLResponse)
-def home():
-    return """
-    <html>
-        <head>
-            <title>Server manager</title>
-        </head>
-        <body>
-            <h1>Hi welcome in manager of the server =)</h1>
-        </body>
-    </html>
-    """
+# @app.get("/", response_class=HTMLResponse)
+# def home():
+#     return """
+#     <html>
+#         <head>
+#             <title>Server manager</title>
+#         </head>
+#         <body>
+#             <h1>Hi welcome in manager of the server =)</h1>
+#         </body>
+#     </html>
+#     """
 
 
 # @app.post("/")
