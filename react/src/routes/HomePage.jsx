@@ -6,13 +6,12 @@ import OverviewCard from "../components/dashboard/OverviewCard";
 import { FileText, CheckCircle2, XCircle, Send, Server as ServerIcon } from "lucide-react";
 import API_BASE_URL from "../settings.jsx"
 
-const USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbnRla2VzMSIsImlkIjoxLCJzZWN1cml0eV9jaGFyIjoicWNabjlWV2ZwUUtiVm5FeTdpZEFKTUZ2In0.tD9rCJHNM8c705IJLtDDWOq95mypwEN-e0SPwOctcEc"; 
+const USER_TOKEN = localStorage.getItem("token");
 
 const HomePage = () => {
   const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-    // Pobieranie serwerów z FastAPI
   const fetchServers = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/server-api/view_servers`, {

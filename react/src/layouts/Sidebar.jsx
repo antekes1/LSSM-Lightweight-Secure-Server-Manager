@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   AppWindow,
@@ -10,6 +10,7 @@ import {
   FileText,
   Wallet,
   Menu,
+  LogOut, // Dodano ikonę wylogowywania
 } from "lucide-react";
 
 const items = [
@@ -23,6 +24,14 @@ const items = [
 ];
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+
+  // Funkcja wylogowująca
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login"); // Zmień ścieżkę, jeśli AuthPage jest pod innym adresem
+  };
+
   return (
     <aside className="hidden md:flex md:w-[260px] md:shrink-0 md:flex-col md:border-r md:border-white/40 md:bg-white/70 md:p-4 md:backdrop-blur">
       <div className="flex items-center justify-between rounded-2xl bg-white/70 px-3 py-3 shadow-sm">
@@ -71,6 +80,17 @@ const Sidebar = () => {
           );
         })}
       </nav>
+
+      {/* Sekcja Logout - 'mt-auto' spycha ją na sam dół paska */}
+      <div className="mt-auto pt-4 border-t border-slate-200/50">
+        <button 
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-red-500 transition hover:bg-red-50 hover:text-red-600"
+        >
+          <LogOut size={18} />
+          <span>Logout</span>
+        </button>
+      </div>
     </aside>
   );
 };

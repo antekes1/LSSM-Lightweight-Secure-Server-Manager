@@ -13,12 +13,10 @@ import {
 import API_BASE_URL from "../../settings.jsx";
 import { useToast } from "../../contexts/ToastContext";
 
-// Tutaj umieszczasz swój token użytkownika 
-// (najlepiej przenieść to do Contextu lub localStorage w przyszłości)
-const USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbnRla2VzMSIsImlkIjoxLCJzZWN1cml0eV9jaGFyIjoicWNabjlWV2ZwUUtiVm5FeTdpZEFKTUZ2In0.tD9rCJHNM8c705IJLtDDWOq95mypwEN-e0SPwOctcEc"; 
+const USER_TOKEN = localStorage.getItem("token");
 
 const ServerDetails = () => {
-  const { id } = useParams(); // Zgrywa parametr z URL np. /server/:id
+  const { id } = useParams();
   const { showToast } = useToast();
   
   const [activeTab, setActiveTab] = useState('logs');

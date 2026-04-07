@@ -13,6 +13,7 @@ import ServerDetails from "./routes/server/ServerPage";
 import LogsArchive from "./routes/server/ArchivalLogs";
 import AddUser from "./routes/AddUserPage";
 import { ToastProvider } from "./contexts/ToastContext";
+import ProtectedRoute from "./contexts/ProtectRouteContext";
 
 function App() {
   return (
@@ -20,7 +21,10 @@ function App() {
     <Router>
       <Routes>
         <Route element={<AdminLayout />}>
-          <Route path="/" element={<HomePage />} />
+          <Route exact path="/" element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>} />
           <Route path="/server/:id" element={<ServerDetails />} />
           <Route path="/add-user" element={<AddUser />} />
           <Route path="/logs" element={<LogsArchive />} />
