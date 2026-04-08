@@ -112,3 +112,16 @@ class Server(Base):
     # === Extra ===
     tags = Column(JSON, default=list)
     extra_data = Column(JSON)
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    alert_type = Column(String, index=True)  # np. "ERROR", "WARN", "INFO"
+    message = Column(String)
+    is_read = Column(Boolean, default=False) # Status przeczytania w Web UI
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )

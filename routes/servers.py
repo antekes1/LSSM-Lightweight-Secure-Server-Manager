@@ -30,7 +30,7 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
-async def scheuld_alert(id: int, time: int):
+async def scheuld_alert(id: int, time: int, db):
     import asyncio
     await asyncio.sleep(time)
     with Session(bind=engine) as session:
@@ -41,6 +41,14 @@ async def scheuld_alert(id: int, time: int):
                 return
             server.state = "error"
             session.commit()
+            new_alert = models.Alert(
+                alert_type="ERROR",
+                message=f"Server with id {id} failed to boot within expected time.",
+                is_read=False
+            )
+            db.add(new_alert)
+            db.commit()
+            db.refresh(new_alert)
             await alert_manager.send(alert_type="ERROR", alert_message=f"Server with id {id} failed to boot within expected time.")
     print("Data processed:")
 
@@ -154,7 +162,7 @@ class message_api():
         send_magic_packet(server.mac_address)
         id = server.id
         time_to_del = timedelta(minutes=2).total_seconds()
-        background_tasks.add_task(scheuld_alert, id, time_to_del)
+        background_tasks.add_task(scheuld_alert, id, time_to_del, db)
         server.state = "booting"
         db.commit()
         return {"msg": "success", "status": "WOL sent", "state": server.state}

@@ -10,14 +10,15 @@ import {
   FileText,
   Wallet,
   Menu,
-  LogOut, // Dodano ikonę wylogowywania
+  LogOut,
+  ScrollText
 } from "lucide-react";
 
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/" },
   { label: "Apps", icon: AppWindow, to: "/apps" },
   { label: "Charts", icon: BarChart3, to: "/charts" },
-  { label: "Bootstrap", icon: Star, to: "/bootstrap" },
+  { label: "Logs", icon: ScrollText, to: "/logs" },
   { label: "Plugins", icon: Heart, to: "/plugins" },
   { label: "Widget", icon: Settings, to: "/widget" },
   { label: "Forms", icon: FileText, to: "/forms" },
@@ -29,7 +30,7 @@ const Sidebar = () => {
   // Funkcja wylogowująca
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login"); // Zmień ścieżkę, jeśli AuthPage jest pod innym adresem
+    navigate("/login");
   };
 
   return (

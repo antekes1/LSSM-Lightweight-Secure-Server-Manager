@@ -11,28 +11,28 @@ const USER_TOKEN = localStorage.getItem("token");
 const HomePage = () => {
   const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState([]);
 
   const fetchServers = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/server-api/view_servers`, {
+      const serverRes = await fetch(`${API_BASE_URL}/server-api/view_servers`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: USER_TOKEN })
       });
-      
-      const data = await response.json();
-      
-      console.log("🔥 [FastAPI Response] /view_servers:", data);
-      
-      if (data.servers) {
-        setServers(data.servers);
-      } else {
-        console.warn("⚠️ Ostrzeżenie: FastAPI nie zwróciło tablicy 'servers'. Sprawdź kod backendu.");
-      }
+      const serverData = await serverRes.json();
+      if (serverData.servers) setServers(serverData.servers);
+
+      const alertRes = await fetch(`${API_BASE_URL}/core-api/get_alerts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: USER_TOKEN })
+      });
+      const alertData = await alertRes.json();
+      if (alertData.alerts) setAlerts(alertData.alerts);
+
     } catch (error) {
-      console.error("❌ Failed to fetch servers:", error);
+      console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
     }
@@ -66,6 +66,8 @@ const HomePage = () => {
   const onlineCount = servers.filter(s => s.state === "online").length;
   const offlineCount = servers.filter(s => s.state === "offline" || s.state === "error").length;
 
+  const unreadAlertsCount = alerts.filter(a => !a.is_read).length;
+
   const stats = [
     { title: "Total Servers", value: servers.length.toString(), icon: ServerIcon, variant: "dark" },
     { title: "Online Servers", value: onlineCount.toString(), icon: CheckCircle2, variant: "purple" },
@@ -75,7 +77,8 @@ const HomePage = () => {
 
   return (
     <div className="space-y-4">
-      <Topbar />
+      {/* <Topbar unreadAlerts={unreadAlertsCount} /> */}
+      <Topbar alerts={alerts} refreshAlerts={fetchServers} />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (

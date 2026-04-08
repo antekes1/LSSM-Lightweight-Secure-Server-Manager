@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Server, HardDrive, Cpu, MemoryStick, Activity, 
   TerminalSquare, Power, Settings, ShieldCheck, 
-  Globe, Network, Loader2
+  Globe, Network, Loader2, Command
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, 
@@ -19,25 +19,64 @@ const ServerDetails = () => {
   const { id } = useParams();
   const { showToast } = useToast();
   
-  const [activeTab, setActiveTab] = useState('logs');
+  // Zaktualizowany stan dla nowej zakładki konsoli
+  const [activeTab, setActiveTab] = useState('logs'); // 'services' | 'logs' | 'console'
+  
   const [serverData, setServerData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState([]);
 
-  // Placeholder do wykresów (do momentu aż FastAPI nie wyśle prawdziwej historii np. poprzez websockets/influxdb)
+  // Stan i referencje dla nowej interaktywnej konsoli
+  const [consoleHistory, setConsoleHistory] = useState([
+    { type: 'output', text: 'LSSM Web Console v1.0.0' },
+    { type: 'output', text: 'Type a command and press Enter to execute.' },
+  ]);
+  const [consoleInput, setConsoleInput] = useState('');
+  const consoleBottomRef = useRef(null);
+
+  // Scroll do samego dołu po każdym wpisie do konsoli
+  useEffect(() => {
+    if (activeTab === 'console' && consoleBottomRef.current) {
+      consoleBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [consoleHistory, activeTab]);
+
+  // Obsługa wysyłania komendy w konsoli
+  const handleConsoleSubmit = async (e) => {
+    if (e.key === 'Enter' && consoleInput.trim() !== '') {
+      const cmd = consoleInput.trim();
+      
+      // 1. Dodaj komendę użytkownika do widoku
+      setConsoleHistory(prev => [...prev, { type: 'input', text: `[root@${serverData?.hostname || 'localhost'} ~]# ${cmd}` }]);
+      setConsoleInput('');
+
+      // 2. MIEJSCE NA API CALL (Do zastąpienia strzałem w FastAPI)
+      // const res = await fetch(...)
+      
+      // Symulacja ładowania komendy (do usunięcia gdy dodasz API)
+      setTimeout(() => {
+        let output = `Command not found: ${cmd}`;
+        if (cmd === 'help') output = 'Available commands: help, clear, ping';
+        if (cmd === 'clear') {
+          setConsoleHistory([]);
+          return;
+        }
+        
+        setConsoleHistory(prev => [...prev, { type: 'output', text: output }]);
+      }, 400);
+    }
+  };
+
   const chartData = [
     { time: '10:00', cpu: 30, ram: 60 },
     { time: '10:05', cpu: 45, ram: 62 },
     { time: '10:10', cpu: serverData?.cpu_usage || 0, ram: serverData?.ram_usage || 0 },
   ];
 
-  // Placeholder serwisów
   const servicesData = [
     { name: 'Agent', port: '8000', domain: '-', status: serverData?.state === 'online' ? 'running' : 'stopped' }
   ];
 
-  // ============================================
-  // LOGIKA KOMUNIKACJI Z FASTAPI
-  // ============================================
   const fetchServerDetails = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/server-api/view_server`, {
@@ -53,8 +92,6 @@ const ServerDetails = () => {
       
       if (response.ok && data.server) {
         setServerData(data.server);
-      } else {
-        console.error("Server API Error:", data);
       }
     } catch (error) {
       console.error("Failed to fetch server details:", error);
@@ -70,7 +107,7 @@ const ServerDetails = () => {
     const pollServer = async () => {
       if (!isMounted) return;
       await fetchServerDetails();
-      timeoutId = setTimeout(pollServer, 3000); // Polling co 3 sekundy
+      timeoutId = setTimeout(pollServer, 3000);
     };
 
     pollServer();
@@ -81,14 +118,49 @@ const ServerDetails = () => {
     };
   }, [id]);
 
+  useEffect(() => {
+    let timeoutId;
+    let isMounted = true;
+
+    const pollLogs = async () => {
+      if (!isMounted || activeTab !== 'logs') return;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/core-api/get_logs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            token: USER_TOKEN,
+            server_id: parseInt(id) 
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.logs) {
+          setLogs(data.logs);
+        }
+      } catch (error) {
+        console.error("Failed to fetch logs:", error);
+      }
+      
+      timeoutId = setTimeout(pollLogs, 3000);
+    };
+
+    if (activeTab === 'logs') {
+      pollLogs();
+    }
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [id, activeTab]);
+
   const handleReboot = async () => {
-    // Jeżeli dodasz logikę rebootu do API, tu wywołaj strzał
     showToast("Reboot Requested", "Komenda reboot została wysłana do serwera", "info");
   };
 
-  // ============================================
-  // WYŚWIETLANIE EKRANU W TRAKCIE ŁADOWANIA
-  // ============================================
   if (loading && !serverData) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -101,9 +173,6 @@ const ServerDetails = () => {
     return <div className="p-8 text-rose-500 font-bold">Serwer nie został znaleziony!</div>;
   }
 
-  // ============================================
-  // GŁÓWNY WIDOK
-  // ============================================
   return (
     <div className="h-full w-full flex flex-col font-poppins text-slate-200">
       
@@ -218,6 +287,8 @@ const ServerDetails = () => {
           </div>
 
           <div className="rounded-2xl bg-slate-800/40 flex flex-col flex-1 min-h-0 overflow-hidden">
+            
+            {/* TABS NAVIGATION */}
             <div className="flex border-b border-slate-700/50 shrink-0">
               <button 
                 onClick={() => setActiveTab('services')}
@@ -231,9 +302,17 @@ const ServerDetails = () => {
               >
                 <span className="flex items-center justify-center gap-1.5"><TerminalSquare size={14}/> Live Logs</span>
               </button>
+              <button 
+                onClick={() => setActiveTab('console')}
+                className={`flex-1 py-3 text-xs font-semibold transition ${activeTab === 'console' ? 'bg-slate-700/30 text-white border-b-2 border-violet-500' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                <span className="flex items-center justify-center gap-1.5"><Command size={14}/> Console</span>
+              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
+            {/* TAB CONTENT */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col min-h-0 relative">
+              
               {activeTab === 'services' && (
                 <table className="w-full text-left text-xs">
                   <thead>
@@ -266,9 +345,68 @@ const ServerDetails = () => {
 
               {activeTab === 'logs' && (
                 <div className="font-mono text-[11px] leading-relaxed text-slate-300">
-                  <p><span className="text-slate-500">Logi na żywo wymagają połączenia WebSocket z backendem...</span></p>
+                  {logs.length === 0 ? (
+                    <p className="text-slate-500">Pobieranie logów...</p>
+                  ) : (
+                    logs.map((line, idx) => {
+                      const match = line.match(/^(\S+)\s+\[(.*?)\]\s+(.*)$/);
+                      if (match) {
+                        const [, time, level, msg] = match;
+                        
+                        let levelColor = "text-sky-400";
+                        if (level === "WARN" || level === "WARNING") levelColor = "text-yellow-400";
+                        if (level === "ERROR" || level === "FATAL") levelColor = "text-rose-400";
+                        if (level === "SUCCESS") levelColor = "text-emerald-400";
+
+                        const timeObj = new Date(time);
+                        const timeStr = isNaN(timeObj.getTime()) ? time : timeObj.toLocaleTimeString();
+
+                        return (
+                          <p key={idx}>
+                            <span className="text-slate-500">[{timeStr}]</span>{" "}
+                            <span className={`${levelColor} font-bold`}>{level}</span> {msg}
+                          </p>
+                        );
+                      }
+                      return <p key={idx}>{line}</p>;
+                    })
+                  )}
+                  <p className="animate-pulse text-slate-500 mt-2">_</p>
                 </div>
               )}
+
+              {/* NEW TAB: CONSOLE */}
+              {activeTab === 'console' && (
+                <div className="font-mono text-[12px] flex flex-col h-full bg-[#0d1117] rounded-lg p-3 overflow-hidden border border-slate-700/50">
+                  <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-2">
+                    {consoleHistory.map((log, idx) => (
+                      <div key={idx} className={log.type === 'input' ? 'text-emerald-400 mt-2 font-bold' : 'text-slate-300 ml-4'}>
+                        {log.text}
+                      </div>
+                    ))}
+                    {/* Anchor point to scroll to bottom */}
+                    <div ref={consoleBottomRef} className="h-1"></div>
+                  </div>
+                  
+                  {/* Console Input */}
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50 shrink-0">
+                    <span className="text-emerald-400 font-bold whitespace-nowrap">
+                      [root@{serverData?.hostname || 'localhost'} ~]#
+                    </span>
+                    <input
+                      type="text"
+                      className="flex-1 bg-transparent outline-none text-slate-200 placeholder:text-slate-600"
+                      autoFocus
+                      placeholder="Type a command..."
+                      value={consoleInput}
+                      onChange={(e) => setConsoleInput(e.target.value)}
+                      onKeyDown={handleConsoleSubmit}
+                      disabled={serverData?.state !== 'online'}
+                    />
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>

@@ -17,6 +17,7 @@ from schemas.servers import GetActiveLogs, PostLog, GetArchivedLogs
 from utils.alerts import TelegramProvider, AlertManager, DiscordProvider
 from utils.permissions import InheritedPermissions, Perms
 from settings import chat_id, telegram_bot_api, log_dir, archived_log_dir, static_vars
+from schemas.core import AlertResponse, MarkAlertRequest
 
 router = InferringRouter(
     prefix='/core-api',
@@ -113,7 +114,47 @@ class message_api():
 
     @router.post("/send_alert", status_code=status.HTTP_200_OK)
     async def sent_alert(self, alert: str, alert_type: str):
+        db = self.db_dependency
+
         await alert_manager.send(alert_type=alert_type, alert_message=alert)
+
+        new_alert = models.Alert(
+            alert_type=alert_type,
+            message=alert,
+            is_read=False
+        )
+        db.add(new_alert)
+        db.commit()
+        db.refresh(new_alert)
+
+        return {"msg": "success", "alert_id": new_alert.id}
+
+    @router.post("/get_alerts", status_code=status.HTTP_200_OK)
+    async def get_alerts(self, request: Request):
+        db = self.db_dependency
+
+        alerts = db.query(models.Alert).order_by(
+            models.Alert.is_read.asc(),
+            models.Alert.created_at.desc()
+        ).limit(50).all()
+
+        return {
+            "msg": "success",
+            "alerts": alerts
+        }
+
+    @router.post("/mark_alert_read", status_code=status.HTTP_200_OK)
+    async def mark_alert_read(self, request: MarkAlertRequest):
+        db = self.db_dependency
+        user = await self.get_user(token=request.token)
+
+        alert = db.query(models.Alert).filter(models.Alert.id == request.alert_id).first()
+        if not alert:
+            raise HTTPException(status_code=404, detail="Alert not found")
+
+        alert.is_read = True
+        db.commit()
+
         return {"msg": "success"}
 
     @router.post("/add_log", status_code=status.HTTP_200_OK)
